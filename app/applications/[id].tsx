@@ -1,5 +1,5 @@
 import { db } from '@/drizzle/db';
-import { applications } from '@/drizzle/schema';
+import { applications, categories } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -12,6 +12,8 @@ type ApplicationDetails = {
   dateApplied: string;
   priorityScore: number;
   notes: string | null;
+  categoryName: string;
+  categoryIcon: string | null;
 };
 
 export default function ApplicationDetailsScreen() {
@@ -28,8 +30,18 @@ export default function ApplicationDetailsScreen() {
   const loadApplication = async () => {
     try {
       const result = await db
-        .select()
+        .select({
+          id: applications.id,
+          company: applications.company,
+          role: applications.role,
+          dateApplied: applications.dateApplied,
+          priorityScore: applications.priorityScore,
+          notes: applications.notes,
+          categoryName: categories.name,
+          categoryIcon: categories.icon,
+        })
         .from(applications)
+        .innerJoin(categories, eq(applications.categoryId, categories.id))
         .where(eq(applications.id, Number(id)));
 
       if (result.length > 0) {
@@ -94,6 +106,12 @@ export default function ApplicationDetailsScreen() {
       <Text style={styles.heading}>{application.company}</Text>
       <Text style={styles.subheading}>{application.role}</Text>
 
+      <View style={styles.categoryBadge}>
+        <Text style={styles.categoryBadgeText}>
+          {application.categoryIcon || '📁'} {application.categoryName}
+        </Text>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.label}>Date Applied</Text>
         <Text style={styles.value}>
@@ -111,21 +129,21 @@ export default function ApplicationDetailsScreen() {
         </Text>
       </View>
 
-<Pressable
-  style={styles.editButton}
-  onPress={() =>
-    router.push({
-      pathname: '/applications/edit/[id]',
-      params: { id: String(application.id) },
-    })
-  }
->
-  <Text style={styles.editButtonText}>Edit Application</Text>
-</Pressable>
+      <Pressable
+        style={styles.editButton}
+        onPress={() =>
+          router.push({
+            pathname: '/applications/edit/[id]',
+            params: { id: String(application.id) },
+          })
+        }
+      >
+        <Text style={styles.editButtonText}>Edit Application</Text>
+      </Pressable>
 
-<Pressable style={styles.deleteButton} onPress={handleDelete}>
-  <Text style={styles.deleteButtonText}>Delete Application</Text>
-</Pressable>
+      <Pressable style={styles.deleteButton} onPress={handleDelete}>
+        <Text style={styles.deleteButtonText}>Delete Application</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -146,7 +164,20 @@ const styles = StyleSheet.create({
   subheading: {
     fontSize: 16,
     color: '#475569',
+    marginBottom: 12,
+  },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#e2e8f0',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
     marginBottom: 20,
+  },
+  categoryBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0f172a',
   },
   card: {
     backgroundColor: '#ffffff',
@@ -170,7 +201,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0f172a',
   },
-    editButton: {
+  editButton: {
     backgroundColor: '#2563eb',
     paddingVertical: 14,
     borderRadius: 10,

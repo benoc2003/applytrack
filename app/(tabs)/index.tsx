@@ -1,8 +1,9 @@
 import { db } from '@/drizzle/db';
-import { applications } from '@/drizzle/schema';
+import { applications, categories } from '@/drizzle/schema';
+import { eq } from 'drizzle-orm';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
+import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 type ApplicationItem = {
   id: number;
@@ -11,21 +12,38 @@ type ApplicationItem = {
   dateApplied: string;
   priorityScore: number;
   notes: string | null;
+  categoryId: number;
+  categoryName: string;
+  categoryIcon: string | null;
 };
 
 export default function HomeScreen() {
   const [items, setItems] = useState<ApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-useFocusEffect(
-  useCallback(() => {
-    loadApplications();
-  }, [])
-);
+  useFocusEffect(
+    useCallback(() => {
+      loadApplications();
+    }, [])
+  );
 
   const loadApplications = async () => {
     try {
-      const data = await db.select().from(applications);
+      const data = await db
+        .select({
+          id: applications.id,
+          company: applications.company,
+          role: applications.role,
+          dateApplied: applications.dateApplied,
+          priorityScore: applications.priorityScore,
+          notes: applications.notes,
+          categoryId: applications.categoryId,
+          categoryName: categories.name,
+          categoryIcon: categories.icon,
+        })
+        .from(applications)
+        .innerJoin(categories, eq(applications.categoryId, categories.id));
+
       setItems(data as ApplicationItem[]);
     } catch (error) {
       console.log('Error loading applications:', error);
@@ -38,11 +56,29 @@ useFocusEffect(
     return (
       <Pressable
         style={styles.card}
-onPress={() => router.push({ pathname: '/applications/[id]', params: { id: item.id } })}
+        onPress={() =>
+          router.push({
+            pathname: '/applications/[id]',
+            params: { id: String(item.id) },
+          })
+        }
       >
-        <Text style={styles.company}>{item.company}</Text>
-        <Text style={styles.role}>{item.role}</Text>
-        <Text style={styles.meta}>Applied: {new Date(item.dateApplied).toLocaleDateString()}</Text>
+        <View style={styles.cardTopRow}>
+          <View>
+            <Text style={styles.company}>{item.company}</Text>
+            <Text style={styles.role}>{item.role}</Text>
+          </View>
+
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>
+              {item.categoryIcon || '📁'} {item.categoryName}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.meta}>
+          Applied: {new Date(item.dateApplied).toLocaleDateString()}
+        </Text>
         <Text style={styles.meta}>Priority: {item.priorityScore}/5</Text>
         {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
       </Pressable>
@@ -69,12 +105,12 @@ onPress={() => router.push({ pathname: '/applications/[id]', params: { id: item.
 
   return (
     <SafeAreaView style={styles.container}>
-<Text style={styles.heading}>ApplyTrack</Text>
-<Text style={styles.subheading}>Your applications</Text>
+      <Text style={styles.heading}>ApplyTrack</Text>
+      <Text style={styles.subheading}>Your applications</Text>
 
-<Pressable style={styles.addButton} onPress={() => router.push('/applications/add')}>
-  <Text style={styles.addButtonText}>Add Application</Text>
-</Pressable>
+      <Pressable style={styles.addButton} onPress={() => router.push('/applications/add')}>
+        <Text style={styles.addButtonText}>Add Application</Text>
+      </Pressable>
 
       <FlatList
         data={items}
@@ -104,7 +140,7 @@ const styles = StyleSheet.create({
     color: '#475569',
     marginBottom: 16,
   },
-    addButton: {
+  addButton: {
     backgroundColor: '#2563eb',
     paddingVertical: 12,
     borderRadius: 10,
@@ -130,6 +166,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    gap: 10,
+  },
   company: {
     fontSize: 18,
     fontWeight: '700',
@@ -139,7 +182,17 @@ const styles = StyleSheet.create({
   role: {
     fontSize: 15,
     color: '#1e293b',
-    marginBottom: 8,
+  },
+  categoryBadge: {
+    backgroundColor: '#e2e8f0',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+  },
+  categoryBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0f172a',
   },
   meta: {
     fontSize: 14,
