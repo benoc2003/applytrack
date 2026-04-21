@@ -2,7 +2,7 @@ import { db } from '@/drizzle/db';
 import { applications } from '@/drizzle/schema';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
 
 type ApplicationItem = {
   id: number;
@@ -36,13 +36,16 @@ useFocusEffect(
 
   const renderItem = ({ item }: { item: ApplicationItem }) => {
     return (
-      <View style={styles.card}>
+      <Pressable
+        style={styles.card}
+onPress={() => router.push({ pathname: '/applications/[id]', params: { id: item.id } })}
+      >
         <Text style={styles.company}>{item.company}</Text>
         <Text style={styles.role}>{item.role}</Text>
         <Text style={styles.meta}>Applied: {new Date(item.dateApplied).toLocaleDateString()}</Text>
         <Text style={styles.meta}>Priority: {item.priorityScore}/5</Text>
         {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
-      </View>
+      </Pressable>
     );
   };
 
