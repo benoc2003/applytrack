@@ -108,9 +108,15 @@ export default function HomeScreen() {
       <Text style={styles.heading}>ApplyTrack</Text>
       <Text style={styles.subheading}>Your applications</Text>
 
-      <Pressable style={styles.addButton} onPress={() => router.push('/applications/add')}>
-        <Text style={styles.addButtonText}>Add Application</Text>
-      </Pressable>
+<View style={styles.actionRow}>
+  <Pressable style={styles.addButton} onPress={() => router.push('/applications/add')}>
+    <Text style={styles.addButtonText}>Add Application</Text>
+  </Pressable>
+
+  <Pressable style={styles.secondaryButton} onPress={() => router.push('/targets')}>
+    <Text style={styles.secondaryButtonText}>View Targets</Text>
+  </Pressable>
+</View>
 
       <FlatList
         data={items}
@@ -208,5 +214,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#475569',
     marginTop: 20,
+  },
+    actionRow: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  secondaryButton: {
+    backgroundColor: '#0f766e',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
