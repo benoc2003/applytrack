@@ -1,7 +1,7 @@
 import { db } from '@/drizzle/db';
 import { applications } from '@/drizzle/schema';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 type ApplicationItem = {
@@ -17,9 +17,11 @@ export default function HomeScreen() {
   const [items, setItems] = useState<ApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useFocusEffect(
+  useCallback(() => {
     loadApplications();
-  }, []);
+  }, [])
+);
 
   const loadApplications = async () => {
     try {
