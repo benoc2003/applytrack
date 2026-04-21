@@ -1,7 +1,8 @@
 import { db } from '@/drizzle/db';
 import { applications } from '@/drizzle/schema';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 type ApplicationItem = {
   id: number;
@@ -63,8 +64,12 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>ApplyTrack</Text>
-      <Text style={styles.subheading}>Your applications</Text>
+<Text style={styles.heading}>ApplyTrack</Text>
+<Text style={styles.subheading}>Your applications</Text>
+
+<Pressable style={styles.addButton} onPress={() => router.push('/applications/add')}>
+  <Text style={styles.addButtonText}>Add Application</Text>
+</Pressable>
 
       <FlatList
         data={items}
@@ -93,6 +98,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#475569',
     marginBottom: 16,
+  },
+    addButton: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   listContent: {
     paddingBottom: 24,
