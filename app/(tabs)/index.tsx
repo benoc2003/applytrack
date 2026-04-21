@@ -122,6 +122,12 @@ export default function HomeScreen() {
 >
   <Text style={styles.secondaryButtonText}>View Targets</Text>
 </Pressable>
+<Pressable
+  style={styles.secondaryButton}
+  onPress={() => router.push('/insights' as any)}
+>
+  <Text style={styles.secondaryButtonText}>View Insights</Text>
+</Pressable>
 </View>
 
       <FlatList
