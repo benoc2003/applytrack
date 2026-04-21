@@ -111,9 +111,21 @@ export default function ApplicationDetailsScreen() {
         </Text>
       </View>
 
-      <Pressable style={styles.deleteButton} onPress={handleDelete}>
-        <Text style={styles.deleteButtonText}>Delete Application</Text>
-      </Pressable>
+<Pressable
+  style={styles.editButton}
+  onPress={() =>
+    router.push({
+      pathname: '/applications/edit/[id]',
+      params: { id: String(application.id) },
+    })
+  }
+>
+  <Text style={styles.editButtonText}>Edit Application</Text>
+</Pressable>
+
+<Pressable style={styles.deleteButton} onPress={handleDelete}>
+  <Text style={styles.deleteButtonText}>Delete Application</Text>
+</Pressable>
     </SafeAreaView>
   );
 }
@@ -157,6 +169,18 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 16,
     color: '#0f172a',
+  },
+    editButton: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  editButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   deleteButton: {
     backgroundColor: '#dc2626',
