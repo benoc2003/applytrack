@@ -109,13 +109,19 @@ export default function HomeScreen() {
       <Text style={styles.subheading}>Your applications</Text>
 
 <View style={styles.actionRow}>
-  <Pressable style={styles.addButton} onPress={() => router.push('/applications/add')}>
+  <Pressable
+    style={styles.addButton}
+    onPress={() => router.push('/applications/add')}
+  >
     <Text style={styles.addButtonText}>Add Application</Text>
   </Pressable>
 
-  <Pressable style={styles.secondaryButton} onPress={() => router.push('/targets')}>
-    <Text style={styles.secondaryButtonText}>View Targets</Text>
-  </Pressable>
+<Pressable
+  style={styles.secondaryButton}
+  onPress={() => router.push('/targets' as any)}
+>
+  <Text style={styles.secondaryButtonText}>View Targets</Text>
+</Pressable>
 </View>
 
       <FlatList
