@@ -1,8 +1,8 @@
 import { db } from '@/drizzle/db';
-import { applications, categories } from '@/drizzle/schema';
-import { eq } from 'drizzle-orm';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { applicationStatusLogs, applications, categories } from '@/drizzle/schema';
+import { desc, eq } from 'drizzle-orm';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 type ApplicationDetails = {
@@ -16,16 +16,27 @@ type ApplicationDetails = {
   categoryIcon: string | null;
 };
 
+type StatusItem = {
+  id: number;
+  status: string;
+  statusDate: string;
+  notes: string | null;
+};
+
 export default function ApplicationDetailsScreen() {
   const { id } = useLocalSearchParams();
   const [application, setApplication] = useState<ApplicationDetails | null>(null);
+  const [statusItems, setStatusItems] = useState<StatusItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadApplication();
-    }
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        loadApplication();
+        loadStatusHistory();
+      }
+    }, [id])
+  );
 
   const loadApplication = async () => {
     try {
@@ -51,6 +62,28 @@ export default function ApplicationDetailsScreen() {
       console.log('Error loading application:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStatusHistory = async () => {
+    try {
+      const result = await db
+        .select({
+          id: applicationStatusLogs.id,
+          status: applicationStatusLogs.status,
+          statusDate: applicationStatusLogs.statusDate,
+          notes: applicationStatusLogs.notes,
+        })
+        .from(applicationStatusLogs)
+        .where(eq(applicationStatusLogs.applicationId, Number(id)))
+        .orderBy(
+          desc(applicationStatusLogs.statusDate),
+          desc(applicationStatusLogs.id)
+        );
+
+      setStatusItems(result as StatusItem[]);
+    } catch (error) {
+      console.log('Error loading status history:', error);
     }
   };
 
@@ -101,6 +134,8 @@ export default function ApplicationDetailsScreen() {
     );
   }
 
+  const latestStatus = statusItems.length > 0 ? statusItems[0] : null;
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.heading}>{application.company}</Text>
@@ -111,6 +146,21 @@ export default function ApplicationDetailsScreen() {
           {application.categoryIcon || '📁'} {application.categoryName}
         </Text>
       </View>
+
+      {latestStatus ? (
+        <View style={styles.latestStatusCard}>
+          <Text style={styles.latestStatusLabel}>Latest Status</Text>
+          <Text style={styles.latestStatusValue}>{latestStatus.status}</Text>
+          <Text style={styles.latestStatusDate}>
+            {new Date(latestStatus.statusDate).toLocaleDateString()}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.latestStatusCard}>
+          <Text style={styles.latestStatusLabel}>Latest Status</Text>
+          <Text style={styles.latestStatusValue}>No status updates yet</Text>
+        </View>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.label}>Date Applied</Text>
@@ -128,6 +178,36 @@ export default function ApplicationDetailsScreen() {
             : 'No notes added'}
         </Text>
       </View>
+
+      <Text style={styles.sectionHeading}>Status History</Text>
+
+      {statusItems.length === 0 ? (
+        <Text style={styles.stateText}>No status history yet.</Text>
+      ) : (
+        statusItems.map((item) => (
+          <View key={item.id} style={styles.statusCard}>
+            <Text style={styles.statusTitle}>{item.status}</Text>
+            <Text style={styles.statusDate}>
+              {new Date(item.statusDate).toLocaleDateString()}
+            </Text>
+            <Text style={styles.statusNotes}>
+              {item.notes && item.notes.trim().length > 0 ? item.notes : 'No notes added'}
+            </Text>
+          </View>
+        ))
+      )}
+
+      <Pressable
+        style={styles.addStatusButton}
+        onPress={() =>
+          router.push({
+            pathname: '/status/add',
+            params: { applicationId: String(application.id) },
+          })
+        }
+      >
+        <Text style={styles.addStatusButtonText}>Add Status Update</Text>
+      </Pressable>
 
       <Pressable
         style={styles.editButton}
@@ -172,12 +252,34 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 999,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   categoryBadgeText: {
     fontSize: 13,
     fontWeight: '600',
     color: '#0f172a',
+  },
+  latestStatusCard: {
+    backgroundColor: '#dbeafe',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  latestStatusLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1d4ed8',
+    marginBottom: 4,
+  },
+  latestStatusValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  latestStatusDate: {
+    fontSize: 14,
+    color: '#475569',
+    marginTop: 4,
   },
   card: {
     backgroundColor: '#ffffff',
@@ -190,6 +292,38 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  sectionHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 12,
+  },
+  statusCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  statusTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  statusDate: {
+    fontSize: 14,
+    color: '#475569',
+    marginTop: 4,
+  },
+  statusNotes: {
+    fontSize: 14,
+    color: '#334155',
+    marginTop: 6,
+  },
   label: {
     fontSize: 13,
     fontWeight: '600',
@@ -200,6 +334,18 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 16,
     color: '#0f172a',
+  },
+  addStatusButton: {
+    backgroundColor: '#0f766e',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addStatusButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   editButton: {
     backgroundColor: '#2563eb',
