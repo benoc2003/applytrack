@@ -21,6 +21,7 @@ export default function TargetsScreen() {
   const [items, setItems] = useState<TargetItem[]>([]);
   const [weeklyCount, setWeeklyCount] = useState(0);
   const [monthlyCount, setMonthlyCount] = useState(0);
+  const [weeklyStreak, setWeeklyStreak] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -45,18 +46,26 @@ export default function TargetsScreen() {
     }
   };
 
+  const getStartOfWeek = (date: Date) => {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    start.setDate(start.getDate() - diff);
+    start.setHours(0, 0, 0, 0);
+    return start;
+  };
+
   const loadProgress = async () => {
     try {
       const data = await db.select().from(applications);
+      const targetData = await db
+        .select()
+        .from(targets)
+        .where(eq(targets.userId, 1));
 
       const now = new Date();
 
-      const startOfWeek = new Date(now);
-      const day = startOfWeek.getDay();
-      const diff = day === 0 ? 6 : day - 1;
-      startOfWeek.setDate(now.getDate() - diff);
-      startOfWeek.setHours(0, 0, 0, 0);
-
+      const startOfWeek = getStartOfWeek(now);
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       const weekly = data.filter((item) => {
@@ -71,6 +80,43 @@ export default function TargetsScreen() {
 
       setWeeklyCount(weekly.length);
       setMonthlyCount(monthly.length);
+
+      const weeklyTarget = targetData.find((target) => target.periodType === 'weekly');
+
+      if (!weeklyTarget) {
+        setWeeklyStreak(0);
+        return;
+      }
+
+      const applicationsByWeek: Record<string, number> = {};
+
+      data.forEach((item) => {
+        const appliedDate = new Date(item.dateApplied);
+        const weekStart = getStartOfWeek(appliedDate).toISOString().split('T')[0];
+
+        if (!applicationsByWeek[weekStart]) {
+          applicationsByWeek[weekStart] = 0;
+        }
+
+        applicationsByWeek[weekStart] += 1;
+      });
+
+      let streak = 0;
+      let currentWeekStart = getStartOfWeek(now);
+
+      while (true) {
+        const weekKey = currentWeekStart.toISOString().split('T')[0];
+        const countForWeek = applicationsByWeek[weekKey] || 0;
+
+        if (countForWeek >= weeklyTarget.targetCount) {
+          streak += 1;
+          currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+        } else {
+          break;
+        }
+      }
+
+      setWeeklyStreak(streak);
     } catch (error) {
       console.log('Error loading target progress:', error);
     }
@@ -115,6 +161,12 @@ export default function TargetsScreen() {
           />
         </View>
 
+        {target.periodType === 'weekly' ? (
+          <Text style={[styles.streakText, { color: colors.text }]}>
+            Current streak: {weeklyStreak} week{weeklyStreak === 1 ? '' : 's'}
+          </Text>
+        ) : null}
+
         {met ? (
           <Text style={styles.successText}>
             {exceededBy > 0 ? `Exceeded by ${exceededBy}` : 'Target met'}
@@ -128,6 +180,22 @@ export default function TargetsScreen() {
         <Text style={[styles.metaText, { color: colors.muted }]}>
           Started: {new Date(target.startDate).toLocaleDateString()}
         </Text>
+        <Pressable
+  style={{
+    marginTop: 10,
+    backgroundColor: colors.danger,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  }}
+  onPress={async () => {
+    await db.delete(targets).where(eq(targets.id, target.id));
+    loadTargets();
+    loadProgress();
+  }}
+>
+  <Text style={{ color: '#fff', fontWeight: '600' }}>Delete Target</Text>
+</Pressable>
       </View>
     );
   };
@@ -229,6 +297,11 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 999,
+  },
+  streakText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   successText: {
     fontSize: 14,
