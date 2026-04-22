@@ -1,9 +1,10 @@
 import { db } from '@/drizzle/db';
 import { users } from '@/drizzle/schema';
 import { clearCurrentUser, getCurrentUser } from '@/utils/auth';
+import { getThemePreference, saveThemePreference, ThemePreference } from '@/utils/theme';
 import { eq } from 'drizzle-orm';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
     Alert,
     Pressable,
@@ -15,15 +16,31 @@ import {
 
 export default function SettingsScreen() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [themePreference, setThemePreferenceState] = useState<ThemePreference>('light');
 
-  useEffect(() => {
-    loadCurrentUser();
-  }, []);
+  const isDark = themePreference === 'dark';
+
+  useFocusEffect(
+    useCallback(() => {
+      loadCurrentUser();
+      loadTheme();
+    }, [])
+  );
 
   const loadCurrentUser = async () => {
     const userId = await getCurrentUser();
     setCurrentUserId(userId);
   };
+
+  const loadTheme = async () => {
+    const savedTheme = await getThemePreference();
+    setThemePreferenceState(savedTheme ?? 'light');
+  };
+
+const handleThemeChange = async (theme: ThemePreference) => {
+  await saveThemePreference(theme);
+  setThemePreferenceState(theme);
+};
 
   const handleLogout = async () => {
     await clearCurrentUser();
@@ -60,9 +77,50 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Settings</Text>
-      <Text style={styles.subheading}>Manage your account</Text>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? '#0f172a' : '#f4f7fb' },
+      ]}
+    >
+      <Text style={[styles.heading, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+        Settings
+      </Text>
+      <Text style={[styles.subheading, { color: isDark ? '#cbd5e1' : '#475569' }]}>
+        Manage your account and theme
+      </Text>
+
+      <Text style={[styles.sectionLabel, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+        Theme
+      </Text>
+
+      <View style={styles.optionRow}>
+        <Pressable
+          style={[
+            styles.optionButton,
+            { backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#475569' : '#cbd5e1' },
+            themePreference === 'light' && styles.optionButtonSelected,
+          ]}
+          onPress={() => handleThemeChange('light')}
+        >
+          <Text style={[styles.optionButtonText, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+            Light
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.optionButton,
+            { backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#475569' : '#cbd5e1' },
+            themePreference === 'dark' && styles.optionButtonSelected,
+          ]}
+          onPress={() => handleThemeChange('dark')}
+        >
+          <Text style={[styles.optionButtonText, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+            Dark
+          </Text>
+        </Pressable>
+      </View>
 
       <View style={styles.buttonRow}>
         <Pressable style={styles.primaryButton} onPress={handleLogout}>
@@ -80,20 +138,42 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f7fb',
     paddingHorizontal: 16,
     paddingTop: 20,
   },
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
   },
   subheading: {
     fontSize: 16,
-    color: '#475569',
     marginBottom: 20,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  optionButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  optionButtonSelected: {
+    borderColor: '#2563eb',
+    backgroundColor: '#dbeafe',
+  },
+  optionButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   buttonRow: {
     gap: 12,
