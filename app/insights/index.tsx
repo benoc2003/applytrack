@@ -1,5 +1,6 @@
 import { db } from '@/drizzle/db';
 import { applications, categories } from '@/drizzle/schema';
+import { useAppTheme } from '@/utils/use-app-theme';
 import { eq } from 'drizzle-orm';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -8,13 +9,9 @@ import { PieChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
 
-type CategoryItem = {
-  id: number;
-  name: string;
-  color: string | null;
-};
-
 export default function InsightsScreen() {
+  const { colors, mode } = useAppTheme();
+
   const [weeklyCount, setWeeklyCount] = useState(0);
   const [monthlyCount, setMonthlyCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -41,31 +38,32 @@ export default function InsightsScreen() {
 
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const weekly = apps.filter(a => new Date(a.dateApplied) >= startOfWeek);
-      const monthly = apps.filter(a => new Date(a.dateApplied) >= startOfMonth);
+      const weekly = apps.filter((a) => new Date(a.dateApplied) >= startOfWeek);
+      const monthly = apps.filter((a) => new Date(a.dateApplied) >= startOfMonth);
 
       setWeeklyCount(weekly.length);
       setMonthlyCount(monthly.length);
       setTotalCount(apps.length);
 
-      // category breakdown
       const grouped: Record<number, number> = {};
 
-      apps.forEach(app => {
+      apps.forEach((app) => {
         if (!grouped[app.categoryId]) {
           grouped[app.categoryId] = 0;
         }
         grouped[app.categoryId]++;
       });
 
+      const fallbackColors = ['#2563eb', '#16a34a', '#dc2626', '#ca8a04', '#9333ea'];
+
       const chart = Object.keys(grouped).map((key, index) => {
-        const category = cats.find(c => c.id === Number(key));
+        const category = cats.find((c) => c.id === Number(key));
 
         return {
           name: category?.name || 'Other',
           population: grouped[Number(key)],
-          color: category?.color || ['#2563eb','#16a34a','#dc2626','#ca8a04','#9333ea'][index % 5],
-          legendFontColor: '#0f172a',
+          color: category?.color || fallbackColors[index % fallbackColors.length],
+          legendFontColor: mode === 'dark' ? '#f8fafc' : '#0f172a',
           legendFontSize: 12,
         };
       });
@@ -77,44 +75,93 @@ export default function InsightsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>Insights</Text>
-        <Text style={styles.subheading}>Your application activity</Text>
+        <Text style={[styles.heading, { color: colors.text }]}>Insights</Text>
+        <Text style={[styles.subheading, { color: colors.subtext }]}>
+          Your application activity
+        </Text>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>This Week</Text>
-          <Text style={styles.cardMain}>{weeklyCount}</Text>
+        <View style={styles.metricsGrid}>
+          <View
+            style={[
+              styles.metricCard,
+              {
+                backgroundColor: colors.card,
+                shadowOpacity: 0.08,
+                elevation: 3,
+              },
+            ]}
+          >
+            <Text style={[styles.cardTitle, { color: colors.muted }]}>This Week</Text>
+            <Text style={[styles.cardMain, { color: colors.primary }]}>{weeklyCount}</Text>
+          </View>
+
+          <View
+            style={[
+              styles.metricCard,
+              {
+                backgroundColor: colors.card,
+                shadowOpacity: 0.08,
+                elevation: 3,
+              },
+            ]}
+          >
+            <Text style={[styles.cardTitle, { color: colors.muted }]}>This Month</Text>
+            <Text style={[styles.cardMain, { color: colors.primary }]}>{monthlyCount}</Text>
+          </View>
+
+          <View
+            style={[
+              styles.metricCard,
+              styles.fullWidthCard,
+              {
+                backgroundColor: colors.card,
+                shadowOpacity: 0.08,
+                elevation: 3,
+              },
+            ]}
+          >
+            <Text style={[styles.cardTitle, { color: colors.muted }]}>Total Applications</Text>
+            <Text style={[styles.cardMain, { color: colors.primary }]}>{totalCount}</Text>
+          </View>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>This Month</Text>
-          <Text style={styles.cardMain}>{monthlyCount}</Text>
+        <View
+          style={[
+            styles.chartCard,
+            {
+              backgroundColor: colors.card,
+              shadowOpacity: 0.08,
+              elevation: 3,
+            },
+          ]}
+        >
+          <Text style={[styles.chartTitle, { color: colors.text }]}>Applications by Category</Text>
+
+          {chartData.length > 0 ? (
+            <PieChart
+              data={chartData}
+              width={screenWidth - 64}
+              height={220}
+              chartConfig={{
+                backgroundColor: colors.card,
+                backgroundGradientFrom: colors.card,
+                backgroundGradientTo: colors.card,
+                color: () => colors.text,
+                labelColor: () => colors.text,
+              }}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="10"
+              absolute
+            />
+          ) : (
+            <Text style={[styles.emptyText, { color: colors.subtext }]}>
+              No chart data available yet.
+            </Text>
+          )}
         </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Total Applications</Text>
-          <Text style={styles.cardMain}>{totalCount}</Text>
-        </View>
-
-        <Text style={styles.chartTitle}>Applications by Category</Text>
-
-        {chartData.length > 0 && (
-          <PieChart
-            data={chartData}
-            width={screenWidth - 32}
-            height={220}
-            chartConfig={{
-              backgroundColor: '#ffffff',
-              backgroundGradientFrom: '#ffffff',
-              backgroundGradientTo: '#ffffff',
-              color: () => '#000',
-            }}
-            accessor="population"
-            backgroundColor="transparent"
-            paddingLeft="10"
-          />
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,45 +170,56 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f7fb',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 32,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
   },
   subheading: {
     fontSize: 16,
-    color: '#475569',
     marginBottom: 20,
   },
-  card: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 12,
+  metricsGrid: {
+    gap: 12,
+    marginBottom: 20,
   },
+  metricCard: {
+    padding: 18,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  fullWidthCard: {},
   cardTitle: {
     fontSize: 14,
-    color: '#64748b',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   cardMain: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#2563eb',
+  },
+  chartCard: {
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   chartTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginTop: 20,
-    marginBottom: 10,
-    color: '#0f172a',
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 15,
+    marginTop: 8,
   },
 });

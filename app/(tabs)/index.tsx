@@ -1,5 +1,6 @@
 import { db } from '@/drizzle/db';
 import { applications, categories } from '@/drizzle/schema';
+import { useAppTheme } from '@/utils/use-app-theme';
 import { eq } from 'drizzle-orm';
 import { Href, router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -32,6 +33,8 @@ type CategoryOption = {
 };
 
 export default function HomeScreen() {
+  const { colors } = useAppTheme();
+
   const [items, setItems] = useState<ApplicationItem[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +128,14 @@ export default function HomeScreen() {
   const renderItem = ({ item }: { item: ApplicationItem }) => {
     return (
       <Pressable
-        style={styles.card}
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            shadowOpacity: 0.08,
+            elevation: 3,
+          },
+        ]}
         onPress={() =>
           router.push({
             pathname: '/applications/[id]',
@@ -134,82 +144,102 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.cardTopRow}>
-          <View>
-            <Text style={styles.company}>{item.company}</Text>
-            <Text style={styles.role}>{item.role}</Text>
+          <View style={styles.cardTextBlock}>
+            <Text style={[styles.company, { color: colors.text }]}>{item.company}</Text>
+            <Text style={[styles.role, { color: colors.subtext }]}>{item.role}</Text>
           </View>
 
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryBadgeText}>
+          <View style={[styles.categoryBadge, { backgroundColor: colors.badge }]}>
+            <Text style={[styles.categoryBadgeText, { color: colors.text }]} numberOfLines={1}>
               {item.categoryIcon || '📁'} {item.categoryName}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.meta}>
+        <Text style={[styles.meta, { color: colors.muted }]}>
           Applied: {new Date(item.dateApplied).toLocaleDateString()}
         </Text>
-        <Text style={styles.meta}>Priority: {item.priorityScore}/5</Text>
-        {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
+        <Text style={[styles.meta, { color: colors.muted }]}>
+          Priority: {item.priorityScore}/5
+        </Text>
+        {item.notes ? (
+          <Text style={[styles.notes, { color: colors.subtext }]}>{item.notes}</Text>
+        ) : null}
       </Pressable>
     );
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.heading}>ApplyTrack</Text>
-        <Text style={styles.stateText}>Loading applications...</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.heading, { color: colors.text }]}>ApplyTrack</Text>
+        <Text style={[styles.stateText, { color: colors.subtext }]}>Loading applications...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>ApplyTrack</Text>
-      <Text style={styles.subheading}>Your applications</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.heading, { color: colors.text }]}>ApplyTrack</Text>
+      <Text style={[styles.subheading, { color: colors.subtext }]}>Your applications</Text>
 
-      <View style={styles.actionRow}>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => router.push('/applications/add' as Href)}
-        >
-          <Text style={styles.addButtonText}>Add Application</Text>
-        </Pressable>
+      <View style={styles.actionSection}>
+        <View style={styles.actionRow}>
+          <Pressable
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/applications/add' as Href)}
+          >
+            <Text style={styles.addButtonText}>Add Application</Text>
+          </Pressable>
 
-        <Pressable
-          style={styles.secondaryButton}
-          onPress={() => router.push('/targets' as any)}
-        >
-          <Text style={styles.secondaryButtonText}>View Targets</Text>
-        </Pressable>
+          <Pressable
+            style={[styles.secondaryButton, { backgroundColor: colors.secondary }]}
+            onPress={() => router.push('/targets' as any)}
+          >
+            <Text style={styles.secondaryButtonText}>View Targets</Text>
+          </Pressable>
 
-        <Pressable
-          style={styles.secondaryButton}
-          onPress={() => router.push('/insights' as any)}
-        >
-          <Text style={styles.secondaryButtonText}>View Insights</Text>
-        </Pressable>
+          <Pressable
+            style={[styles.secondaryButton, { backgroundColor: colors.secondary }]}
+            onPress={() => router.push('/insights' as any)}
+          >
+            <Text style={styles.secondaryButtonText}>View Insights</Text>
+          </Pressable>
+        </View>
       </View>
 
       <TextInput
-        style={styles.searchInput}
+        style={[
+          styles.searchInput,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            color: colors.text,
+          },
+        ]}
         placeholder="Search by company or role"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.muted}
         value={searchText}
         onChangeText={setSearchText}
       />
 
-      <Text style={styles.filterLabel}>Category</Text>
+      <Text style={[styles.filterLabel, { color: colors.text }]}>Category</Text>
       <View style={styles.filterRow}>
         <Pressable
           style={[
             styles.filterButton,
-            selectedCategoryId === null && styles.filterButtonSelected,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+            selectedCategoryId === null && {
+              backgroundColor: colors.selected,
+              borderColor: colors.primary,
+            },
           ]}
           onPress={() => setSelectedCategoryId(null)}
         >
-          <Text style={styles.filterButtonText}>All</Text>
+          <Text style={[styles.filterButtonText, { color: colors.text }]}>All</Text>
         </Pressable>
 
         {categoryOptions.map((category) => (
@@ -217,52 +247,82 @@ export default function HomeScreen() {
             key={category.id}
             style={[
               styles.filterButton,
-              selectedCategoryId === category.id && styles.filterButtonSelected,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+              selectedCategoryId === category.id && {
+                backgroundColor: colors.selected,
+                borderColor: colors.primary,
+              },
             ]}
             onPress={() => setSelectedCategoryId(category.id)}
           >
-            <Text style={styles.filterButtonText}>
+            <Text style={[styles.filterButtonText, { color: colors.text }]}>
               {category.icon || '📁'} {category.name}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.filterLabel}>Date Range</Text>
+      <Text style={[styles.filterLabel, { color: colors.text }]}>Date Range</Text>
       <View style={styles.filterRow}>
         <Pressable
           style={[
             styles.filterButton,
-            dateFilter === 'all' && styles.filterButtonSelected,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+            dateFilter === 'all' && {
+              backgroundColor: colors.selected,
+              borderColor: colors.primary,
+            },
           ]}
           onPress={() => setDateFilter('all')}
         >
-          <Text style={styles.filterButtonText}>All</Text>
+          <Text style={[styles.filterButtonText, { color: colors.text }]}>All</Text>
         </Pressable>
 
         <Pressable
           style={[
             styles.filterButton,
-            dateFilter === '7days' && styles.filterButtonSelected,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+            dateFilter === '7days' && {
+              backgroundColor: colors.selected,
+              borderColor: colors.primary,
+            },
           ]}
           onPress={() => setDateFilter('7days')}
         >
-          <Text style={styles.filterButtonText}>Last 7 Days</Text>
+          <Text style={[styles.filterButtonText, { color: colors.text }]}>Last 7 Days</Text>
         </Pressable>
 
         <Pressable
           style={[
             styles.filterButton,
-            dateFilter === '30days' && styles.filterButtonSelected,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+            dateFilter === '30days' && {
+              backgroundColor: colors.selected,
+              borderColor: colors.primary,
+            },
           ]}
           onPress={() => setDateFilter('30days')}
         >
-          <Text style={styles.filterButtonText}>Last 30 Days</Text>
+          <Text style={[styles.filterButtonText, { color: colors.text }]}>Last 30 Days</Text>
         </Pressable>
       </View>
 
       {filteredItems.length === 0 ? (
-        <Text style={styles.stateText}>No applications match your filters.</Text>
+        <Text style={[styles.stateText, { color: colors.subtext }]}>
+          No applications match your filters.
+        </Text>
       ) : (
         <FlatList
           data={filteredItems}
@@ -278,27 +338,25 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f7fb',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 40,
   },
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
   },
   subheading: {
     fontSize: 16,
-    color: '#475569',
+    marginBottom: 16,
+  },
+  actionSection: {
     marginBottom: 16,
   },
   actionRow: {
     gap: 12,
-    marginBottom: 16,
   },
   addButton: {
-    backgroundColor: '#2563eb',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -309,7 +367,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#0f766e',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -320,20 +377,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   searchInput: {
-    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#0f172a',
-    marginBottom: 14,
+    marginVertical: 12,
   },
   filterLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0f172a',
     marginBottom: 8,
   },
   filterRow: {
@@ -343,77 +396,65 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   filterButton: {
-    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  filterButtonSelected: {
-    backgroundColor: '#dbeafe',
-    borderColor: '#2563eb',
-  },
   filterButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0f172a',
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: 100,
   },
   card: {
-    backgroundColor: '#ffffff',
     padding: 16,
     borderRadius: 14,
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   cardTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 8,
-    gap: 10,
+  },
+  cardTextBlock: {
+    flex: 1,
+    paddingRight: 8,
   },
   company: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
+    flexShrink: 1,
   },
   role: {
     fontSize: 15,
-    color: '#1e293b',
+    flexShrink: 1,
   },
   categoryBadge: {
-    backgroundColor: '#e2e8f0',
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 999,
+    maxWidth: 120,
   },
   categoryBadgeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0f172a',
   },
   meta: {
     fontSize: 14,
-    color: '#475569',
     marginBottom: 2,
   },
   notes: {
     fontSize: 14,
-    color: '#334155',
     marginTop: 8,
   },
   stateText: {
     fontSize: 16,
-    color: '#475569',
     marginTop: 20,
   },
 });

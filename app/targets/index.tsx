@@ -1,5 +1,6 @@
 import { db } from '@/drizzle/db';
 import { applications, targets } from '@/drizzle/schema';
+import { useAppTheme } from '@/utils/use-app-theme';
 import { eq } from 'drizzle-orm';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -15,6 +16,8 @@ type TargetItem = {
 };
 
 export default function TargetsScreen() {
+  const { colors } = useAppTheme();
+
   const [items, setItems] = useState<TargetItem[]>([]);
   const [weeklyCount, setWeeklyCount] = useState(0);
   const [monthlyCount, setMonthlyCount] = useState(0);
@@ -78,26 +81,51 @@ export default function TargetsScreen() {
     const remaining = Math.max(target.targetCount - current, 0);
     const exceededBy = current > target.targetCount ? current - target.targetCount : 0;
     const met = current >= target.targetCount;
+    const progressRatio = Math.min(current / target.targetCount, 1);
 
     return (
-      <View key={target.id} style={styles.card}>
-        <Text style={styles.cardTitle}>
+      <View
+        key={target.id}
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            shadowOpacity: 0.08,
+            elevation: 3,
+          },
+        ]}
+      >
+        <Text style={[styles.cardTitle, { color: colors.text }]}>
           {target.periodType === 'weekly' ? 'Weekly Target' : 'Monthly Target'}
         </Text>
 
-        <Text style={styles.cardMain}>
+        <Text style={[styles.cardMain, { color: colors.primary }]}>
           {current} / {target.targetCount}
         </Text>
+
+        <View style={[styles.progressTrack, { backgroundColor: colors.badge }]}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${progressRatio * 100}%`,
+                backgroundColor: met ? '#16a34a' : colors.primary,
+              },
+            ]}
+          />
+        </View>
 
         {met ? (
           <Text style={styles.successText}>
             {exceededBy > 0 ? `Exceeded by ${exceededBy}` : 'Target met'}
           </Text>
         ) : (
-          <Text style={styles.infoText}>{remaining} remaining</Text>
+          <Text style={[styles.infoText, { color: colors.subtext }]}>
+            {remaining} remaining
+          </Text>
         )}
 
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: colors.muted }]}>
           Started: {new Date(target.startDate).toLocaleDateString()}
         </Text>
       </View>
@@ -105,19 +133,38 @@ export default function TargetsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>Targets</Text>
-        <Text style={styles.subheading}>Track weekly and monthly application goals</Text>
+        <Text style={[styles.heading, { color: colors.text }]}>Targets</Text>
+        <Text style={[styles.subheading, { color: colors.subtext }]}>
+          Track weekly and monthly application goals
+        </Text>
 
-        <Pressable style={styles.addButton} onPress={() => router.push('/targets/add')}>
+        <Pressable
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
+          onPress={() => router.push('/targets/add' as any)}
+        >
           <Text style={styles.addButtonText}>Add Target</Text>
         </Pressable>
 
         {loading ? (
-          <Text style={styles.stateText}>Loading targets...</Text>
+          <Text style={[styles.stateText, { color: colors.subtext }]}>Loading targets...</Text>
         ) : items.length === 0 ? (
-          <Text style={styles.stateText}>No targets created yet.</Text>
+          <View
+            style={[
+              styles.emptyCard,
+              {
+                backgroundColor: colors.card,
+                shadowOpacity: 0.08,
+                elevation: 3,
+              },
+            ]}
+          >
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No targets created yet</Text>
+            <Text style={[styles.emptyText, { color: colors.subtext }]}>
+              Add a weekly or monthly target to start tracking progress.
+            </Text>
+          </View>
         ) : (
           items.map(renderProgressCard)
         )}
@@ -129,30 +176,26 @@ export default function TargetsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f7fb',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 32,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
   },
   subheading: {
     fontSize: 16,
-    color: '#475569',
     marginBottom: 16,
   },
   addButton: {
-    backgroundColor: '#2563eb',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   addButtonText: {
     color: '#ffffff',
@@ -160,46 +203,64 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   card: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 12,
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 8,
   },
   cardMain: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#2563eb',
-    marginBottom: 6,
+    marginBottom: 10,
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: 999,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
   },
   successText: {
     fontSize: 14,
-    color: '#15803d',
+    color: '#16a34a',
     fontWeight: '600',
     marginBottom: 4,
   },
   infoText: {
     fontSize: 14,
-    color: '#475569',
     marginBottom: 4,
   },
   metaText: {
     fontSize: 13,
-    color: '#64748b',
+  },
+  emptyCard: {
+    padding: 18,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 15,
+    lineHeight: 22,
   },
   stateText: {
     fontSize: 16,
-    color: '#475569',
     marginTop: 20,
   },
 });

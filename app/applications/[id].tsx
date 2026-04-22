@@ -1,9 +1,10 @@
 import { db } from '@/drizzle/db';
 import { applicationStatusLogs, applications, categories } from '@/drizzle/schema';
+import { useAppTheme } from '@/utils/use-app-theme';
 import { desc, eq } from 'drizzle-orm';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type ApplicationDetails = {
   id: number;
@@ -24,7 +25,9 @@ type StatusItem = {
 };
 
 export default function ApplicationDetailsScreen() {
+  const { colors } = useAppTheme();
   const { id } = useLocalSearchParams();
+
   const [application, setApplication] = useState<ApplicationDetails | null>(null);
   const [statusItems, setStatusItems] = useState<StatusItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,18 +121,18 @@ export default function ApplicationDetailsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.heading}>Application Details</Text>
-        <Text style={styles.stateText}>Loading...</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.heading, { color: colors.text }]}>Application Details</Text>
+        <Text style={[styles.stateText, { color: colors.subtext }]}>Loading...</Text>
       </SafeAreaView>
     );
   }
 
   if (!application) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.heading}>Application Details</Text>
-        <Text style={styles.stateText}>Application not found.</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.heading, { color: colors.text }]}>Application Details</Text>
+        <Text style={[styles.stateText, { color: colors.subtext }]}>Application not found.</Text>
       </SafeAreaView>
     );
   }
@@ -137,93 +140,122 @@ export default function ApplicationDetailsScreen() {
   const latestStatus = statusItems.length > 0 ? statusItems[0] : null;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>{application.company}</Text>
-      <Text style={styles.subheading}>{application.role}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={[styles.heading, { color: colors.text }]}>{application.company}</Text>
+        <Text style={[styles.subheading, { color: colors.subtext }]}>{application.role}</Text>
 
-      <View style={styles.categoryBadge}>
-        <Text style={styles.categoryBadgeText}>
-          {application.categoryIcon || '📁'} {application.categoryName}
-        </Text>
-      </View>
-
-      {latestStatus ? (
-        <View style={styles.latestStatusCard}>
-          <Text style={styles.latestStatusLabel}>Latest Status</Text>
-          <Text style={styles.latestStatusValue}>{latestStatus.status}</Text>
-          <Text style={styles.latestStatusDate}>
-            {new Date(latestStatus.statusDate).toLocaleDateString()}
+        <View style={[styles.categoryBadge, { backgroundColor: colors.badge }]}>
+          <Text style={[styles.categoryBadgeText, { color: colors.text }]}>
+            {application.categoryIcon || '📁'} {application.categoryName}
           </Text>
         </View>
-      ) : (
-        <View style={styles.latestStatusCard}>
-          <Text style={styles.latestStatusLabel}>Latest Status</Text>
-          <Text style={styles.latestStatusValue}>No status updates yet</Text>
+
+        <View
+          style={[
+            styles.latestStatusCard,
+            {
+              backgroundColor: colors.selected,
+              borderColor: colors.primary,
+            },
+          ]}
+        >
+          <Text style={[styles.latestStatusLabel, { color: colors.primary }]}>Latest Status</Text>
+          <Text style={[styles.latestStatusValue, { color: colors.text }]}>
+            {latestStatus ? latestStatus.status : 'No status updates yet'}
+          </Text>
+          {latestStatus ? (
+            <Text style={[styles.latestStatusDate, { color: colors.subtext }]}>
+              {new Date(latestStatus.statusDate).toLocaleDateString()}
+            </Text>
+          ) : null}
         </View>
-      )}
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Date Applied</Text>
-        <Text style={styles.value}>
-          {new Date(application.dateApplied).toLocaleDateString()}
-        </Text>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.card,
+              shadowOpacity: 0.08,
+              elevation: 3,
+            },
+          ]}
+        >
+          <Text style={[styles.label, { color: colors.muted }]}>Date Applied</Text>
+          <Text style={[styles.value, { color: colors.text }]}>
+            {new Date(application.dateApplied).toLocaleDateString()}
+          </Text>
 
-        <Text style={styles.label}>Priority Score</Text>
-        <Text style={styles.value}>{application.priorityScore}/5</Text>
+          <Text style={[styles.label, { color: colors.muted }]}>Priority Score</Text>
+          <Text style={[styles.value, { color: colors.text }]}>{application.priorityScore}/5</Text>
 
-        <Text style={styles.label}>Notes</Text>
-        <Text style={styles.value}>
-          {application.notes && application.notes.trim().length > 0
-            ? application.notes
-            : 'No notes added'}
-        </Text>
-      </View>
+          <Text style={[styles.label, { color: colors.muted }]}>Notes</Text>
+          <Text style={[styles.value, { color: colors.text }]}>
+            {application.notes && application.notes.trim().length > 0
+              ? application.notes
+              : 'No notes added'}
+          </Text>
+        </View>
 
-      <Text style={styles.sectionHeading}>Status History</Text>
+        <Text style={[styles.sectionHeading, { color: colors.text }]}>Status History</Text>
 
-      {statusItems.length === 0 ? (
-        <Text style={styles.stateText}>No status history yet.</Text>
-      ) : (
-        statusItems.map((item) => (
-          <View key={item.id} style={styles.statusCard}>
-            <Text style={styles.statusTitle}>{item.status}</Text>
-            <Text style={styles.statusDate}>
-              {new Date(item.statusDate).toLocaleDateString()}
-            </Text>
-            <Text style={styles.statusNotes}>
-              {item.notes && item.notes.trim().length > 0 ? item.notes : 'No notes added'}
-            </Text>
-          </View>
-        ))
-      )}
+        {statusItems.length === 0 ? (
+          <Text style={[styles.stateText, { color: colors.subtext }]}>No status history yet.</Text>
+        ) : (
+          statusItems.map((item) => (
+            <View
+              key={item.id}
+              style={[
+                styles.statusCard,
+                {
+                  backgroundColor: colors.card,
+                  shadowOpacity: 0.06,
+                  elevation: 2,
+                },
+              ]}
+            >
+              <Text style={[styles.statusTitle, { color: colors.text }]}>{item.status}</Text>
+              <Text style={[styles.statusDate, { color: colors.subtext }]}>
+                {new Date(item.statusDate).toLocaleDateString()}
+              </Text>
+              <Text style={[styles.statusNotes, { color: colors.subtext }]}>
+                {item.notes && item.notes.trim().length > 0 ? item.notes : 'No notes added'}
+              </Text>
+            </View>
+          ))
+        )}
 
-      <Pressable
-        style={styles.addStatusButton}
-        onPress={() =>
-          router.push({
-            pathname: '/status/add',
-            params: { applicationId: String(application.id) },
-          })
-        }
-      >
-        <Text style={styles.addStatusButtonText}>Add Status Update</Text>
-      </Pressable>
+        <Pressable
+          style={[styles.addStatusButton, { backgroundColor: colors.secondary }]}
+          onPress={() =>
+            router.push({
+              pathname: '/status/add',
+              params: { applicationId: String(application.id) },
+            })
+          }
+        >
+          <Text style={styles.addStatusButtonText}>Add Status Update</Text>
+        </Pressable>
 
-      <Pressable
-        style={styles.editButton}
-        onPress={() =>
-          router.push({
-            pathname: '/applications/edit/[id]',
-            params: { id: String(application.id) },
-          })
-        }
-      >
-        <Text style={styles.editButtonText}>Edit Application</Text>
-      </Pressable>
+        <Pressable
+          style={[styles.editButton, { backgroundColor: colors.primary }]}
+          onPress={() =>
+            router.push({
+              pathname: '/applications/edit/[id]',
+              params: { id: String(application.id) },
+            })
+          }
+        >
+          <Text style={styles.editButtonText}>Edit Application</Text>
+        </Pressable>
 
-      <Pressable style={styles.deleteButton} onPress={handleDelete}>
-        <Text style={styles.deleteButtonText}>Delete Application</Text>
-      </Pressable>
+        <Pressable
+          style={[styles.deleteButton, { backgroundColor: colors.danger }]}
+          onPress={handleDelete}
+        >
+          <Text style={styles.deleteButtonText}>Delete Application</Text>
+        </Pressable>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -231,112 +263,96 @@ export default function ApplicationDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f7fb',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 32,
+  },
+  scrollContent: {
+    paddingBottom: 32,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
   },
   subheading: {
-    fontSize: 16,
-    color: '#475569',
+    fontSize: 17,
     marginBottom: 12,
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#e2e8f0',
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     borderRadius: 999,
     marginBottom: 16,
   },
   categoryBadgeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0f172a',
   },
   latestStatusCard: {
-    backgroundColor: '#dbeafe',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 18,
+    borderWidth: 1,
   },
   latestStatusLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1d4ed8',
     marginBottom: 4,
   },
   latestStatusValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#0f172a',
   },
   latestStatusDate: {
     fontSize: 14,
-    color: '#475569',
     marginTop: 4,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 20,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 22,
     shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   sectionHeading: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 12,
   },
   statusCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
-    marginBottom: 10,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   statusTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0f172a',
   },
   statusDate: {
     fontSize: 14,
-    color: '#475569',
     marginTop: 4,
   },
   statusNotes: {
     fontSize: 14,
-    color: '#334155',
     marginTop: 6,
+    lineHeight: 20,
   },
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748b',
     marginTop: 12,
     marginBottom: 4,
   },
   value: {
     fontSize: 16,
-    color: '#0f172a',
+    lineHeight: 22,
   },
   addStatusButton: {
-    backgroundColor: '#0f766e',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -348,7 +364,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   editButton: {
-    backgroundColor: '#2563eb',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -360,7 +375,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   deleteButton: {
-    backgroundColor: '#dc2626',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -372,7 +386,6 @@ const styles = StyleSheet.create({
   },
   stateText: {
     fontSize: 16,
-    color: '#475569',
     marginTop: 20,
   },
 });

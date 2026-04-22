@@ -1,6 +1,7 @@
 import FormField from '@/components/FormField';
 import { db } from '@/drizzle/db';
 import { applications, categories } from '@/drizzle/schema';
+import { useAppTheme } from '@/utils/use-app-theme';
 import { eq } from 'drizzle-orm';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -23,6 +24,7 @@ type CategoryItem = {
 };
 
 export default function EditApplicationScreen() {
+  const { colors } = useAppTheme();
   const { id } = useLocalSearchParams();
 
   const [company, setCompany] = useState('');
@@ -116,18 +118,20 @@ export default function EditApplicationScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.heading}>Edit Application</Text>
-        <Text style={styles.stateText}>Loading...</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.heading, { color: colors.text }]}>Edit Application</Text>
+        <Text style={[styles.stateText, { color: colors.subtext }]}>Loading...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>Edit Application</Text>
-        <Text style={styles.subheading}>Update an existing application</Text>
+        <Text style={[styles.heading, { color: colors.text }]}>Edit Application</Text>
+        <Text style={[styles.subheading, { color: colors.subtext }]}>
+          Update an existing application
+        </Text>
 
         <FormField
           label="Company"
@@ -150,7 +154,7 @@ export default function EditApplicationScreen() {
           onChangeText={setDateApplied}
         />
 
-        <Text style={styles.categoryLabel}>Category</Text>
+        <Text style={[styles.categoryLabel, { color: colors.text }]}>Category</Text>
         <View style={styles.categoryList}>
           {categoryItems.map((category) => {
             const isSelected = selectedCategoryId === category.id;
@@ -160,11 +164,18 @@ export default function EditApplicationScreen() {
                 key={category.id}
                 style={[
                   styles.categoryOption,
-                  isSelected && styles.categoryOptionSelected,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                  isSelected && {
+                    borderColor: colors.primary,
+                    backgroundColor: colors.selected,
+                  },
                 ]}
                 onPress={() => setSelectedCategoryId(category.id)}
               >
-                <Text style={styles.categoryOptionText}>
+                <Text style={[styles.categoryOptionText, { color: colors.text }]}>
                   {category.icon || '📁'} {category.name}
                 </Text>
               </Pressable>
@@ -188,12 +199,24 @@ export default function EditApplicationScreen() {
         />
 
         <View style={styles.buttonRow}>
-          <Pressable style={styles.saveButton} onPress={handleUpdate}>
+          <Pressable
+            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            onPress={handleUpdate}
+          >
             <Text style={styles.saveButtonText}>Save Changes</Text>
           </Pressable>
 
-          <Pressable style={styles.cancelButton} onPress={() => router.back()}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Pressable
+            style={[
+              styles.cancelButton,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => router.back()}
+          >
+            <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -204,28 +227,24 @@ export default function EditApplicationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f7fb',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 32,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
   },
   subheading: {
     fontSize: 16,
-    color: '#475569',
     marginBottom: 20,
   },
   categoryLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0f172a',
     marginBottom: 8,
   },
   categoryList: {
@@ -233,28 +252,20 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   categoryOption: {
-    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 14,
   },
-  categoryOptionSelected: {
-    borderColor: '#2563eb',
-    backgroundColor: '#dbeafe',
-  },
   categoryOptionText: {
     fontSize: 15,
-    color: '#0f172a',
     fontWeight: '500',
   },
   buttonRow: {
-    marginTop: 8,
+    marginTop: 10,
     gap: 12,
   },
   saveButton: {
-    backgroundColor: '#2563eb',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -265,19 +276,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cancelButton: {
-    backgroundColor: '#e2e8f0',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
+    borderWidth: 1,
   },
   cancelButtonText: {
-    color: '#0f172a',
     fontSize: 15,
     fontWeight: '600',
   },
   stateText: {
     fontSize: 16,
-    color: '#475569',
     marginTop: 20,
   },
 });

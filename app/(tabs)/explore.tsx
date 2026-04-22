@@ -1,5 +1,6 @@
 import { db } from '@/drizzle/db';
 import { categories } from '@/drizzle/schema';
+import { useAppTheme } from '@/utils/use-app-theme';
 import { eq } from 'drizzle-orm';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -14,6 +15,8 @@ type CategoryItem = {
 };
 
 export default function CategoriesScreen() {
+  const { colors } = useAppTheme();
+
   const [items, setItems] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,12 +43,31 @@ export default function CategoriesScreen() {
 
   const renderItem = ({ item }: { item: CategoryItem }) => {
     return (
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            shadowOpacity: 0.08,
+            elevation: 3,
+          },
+        ]}
+      >
         <View style={styles.row}>
-          <Text style={styles.icon}>{item.icon || '📁'}</Text>
-          <View>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.meta}>{item.color || 'No colour set'}</Text>
+          <View
+            style={[
+              styles.iconBadge,
+              { backgroundColor: item.color || colors.badge },
+            ]}
+          >
+            <Text style={styles.icon}>{item.icon || '📁'}</Text>
+          </View>
+
+          <View style={styles.textBlock}>
+            <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+            <Text style={[styles.meta, { color: colors.subtext }]}>
+              {item.color || 'No colour set'}
+            </Text>
           </View>
         </View>
       </View>
@@ -54,24 +76,43 @@ export default function CategoriesScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.heading}>Categories</Text>
-        <Text style={styles.stateText}>Loading categories...</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.heading, { color: colors.text }]}>Categories</Text>
+        <Text style={[styles.stateText, { color: colors.subtext }]}>Loading categories...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Categories</Text>
-      <Text style={styles.subheading}>Manage your application categories</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.heading, { color: colors.text }]}>Categories</Text>
+      <Text style={[styles.subheading, { color: colors.subtext }]}>
+        Manage your application categories
+      </Text>
 
-      <Pressable style={styles.addButton} onPress={() => router.push('/categories/add')}>
+      <Pressable
+        style={[styles.addButton, { backgroundColor: colors.primary }]}
+        onPress={() => router.push('/categories/add' as any)}
+      >
         <Text style={styles.addButtonText}>Add Category</Text>
       </Pressable>
 
       {items.length === 0 ? (
-        <Text style={styles.stateText}>No categories found yet.</Text>
+        <View
+          style={[
+            styles.emptyCard,
+            {
+              backgroundColor: colors.card,
+              shadowOpacity: 0.08,
+              elevation: 3,
+            },
+          ]}
+        >
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No categories found yet</Text>
+          <Text style={[styles.emptyText, { color: colors.subtext }]}>
+            Add your first category to organise applications by type or industry.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={items}
@@ -87,27 +128,23 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f7fb',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 32,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
-    color: '#0f172a',
     marginBottom: 4,
   },
   subheading: {
     fontSize: 16,
-    color: '#475569',
     marginBottom: 16,
   },
   addButton: {
-    backgroundColor: '#2563eb',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   addButtonText: {
     color: '#ffffff',
@@ -115,40 +152,60 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   card: {
-    backgroundColor: '#ffffff',
     padding: 16,
-    borderRadius: 14,
-    marginBottom: 12,
+    borderRadius: 16,
+    marginBottom: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
+  },
+  iconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   icon: {
-    fontSize: 28,
+    fontSize: 24,
+  },
+  textBlock: {
+    flex: 1,
   },
   name: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0f172a',
+    marginBottom: 2,
   },
   meta: {
     fontSize: 14,
-    color: '#475569',
-    marginTop: 2,
+  },
+  emptyCard: {
+    padding: 18,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 15,
+    lineHeight: 22,
   },
   stateText: {
     fontSize: 16,
-    color: '#475569',
     marginTop: 20,
   },
 });
