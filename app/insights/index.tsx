@@ -12,6 +12,7 @@ const screenWidth = Dimensions.get('window').width;
 export default function InsightsScreen() {
   const { colors, mode } = useAppTheme();
 
+  const [dailyCount, setDailyCount] = useState(0);
   const [weeklyCount, setWeeklyCount] = useState(0);
   const [monthlyCount, setMonthlyCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -30,6 +31,9 @@ export default function InsightsScreen() {
 
       const now = new Date();
 
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
+
       const startOfWeek = new Date(now);
       const day = startOfWeek.getDay();
       const diff = day === 0 ? 6 : day - 1;
@@ -38,9 +42,11 @@ export default function InsightsScreen() {
 
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      const daily = apps.filter((a) => new Date(a.dateApplied) >= startOfToday);
       const weekly = apps.filter((a) => new Date(a.dateApplied) >= startOfWeek);
       const monthly = apps.filter((a) => new Date(a.dateApplied) >= startOfMonth);
 
+      setDailyCount(daily.length);
       setWeeklyCount(weekly.length);
       setMonthlyCount(monthly.length);
       setTotalCount(apps.length);
@@ -93,6 +99,20 @@ export default function InsightsScreen() {
               },
             ]}
           >
+            <Text style={[styles.cardTitle, { color: colors.muted }]}>Today</Text>
+            <Text style={[styles.cardMain, { color: colors.primary }]}>{dailyCount}</Text>
+          </View>
+
+          <View
+            style={[
+              styles.metricCard,
+              {
+                backgroundColor: colors.card,
+                shadowOpacity: 0.08,
+                elevation: 3,
+              },
+            ]}
+          >
             <Text style={[styles.cardTitle, { color: colors.muted }]}>This Week</Text>
             <Text style={[styles.cardMain, { color: colors.primary }]}>{weeklyCount}</Text>
           </View>
@@ -114,7 +134,6 @@ export default function InsightsScreen() {
           <View
             style={[
               styles.metricCard,
-              styles.fullWidthCard,
               {
                 backgroundColor: colors.card,
                 shadowOpacity: 0.08,
@@ -196,7 +215,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
-  fullWidthCard: {},
   cardTitle: {
     fontSize: 14,
     marginBottom: 8,
