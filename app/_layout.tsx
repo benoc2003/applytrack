@@ -58,7 +58,7 @@ export default function RootLayout() {
     return (
       <ThemeProvider value={activeTheme}>
         <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="applications/add" options={{ title: 'Add Application' }} />
           <Stack.Screen name="applications/[id]" options={{ title: 'Application Details' }} />
           <Stack.Screen name="applications/edit/[id]" options={{ title: 'Edit Application' }} />
@@ -77,8 +77,8 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={activeTheme}>
       <Stack>
-        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)/register" options={{ headerShown: false }} />
+<Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+<Stack.Screen name="(auth)/register" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={themePreference === 'dark' || (themePreference === null && systemColorScheme === 'dark') ? 'light' : 'dark'} />
     </ThemeProvider>
