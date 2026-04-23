@@ -1,10 +1,10 @@
 import { db, sqlite } from './db';
 import {
-    applications,
-    applicationStatusLogs,
-    categories,
-    targets,
-    users,
+  applications,
+  applicationStatusLogs,
+  categories,
+  targets,
+  users,
 } from './schema';
 
 export async function initDb() {
@@ -119,12 +119,20 @@ export async function initDb() {
       },
     ]);
 
-    await db.insert(targets).values({
-      userId: 1,
-      periodType: 'weekly',
-      targetCount: 5,
-      startDate: new Date().toISOString(),
-    });
+await db.insert(targets).values([
+  {
+    userId: 1,
+    periodType: 'weekly',
+    targetCount: 5,
+    startDate: new Date().toISOString(),
+  },
+  {
+    userId: 1,
+    periodType: 'monthly',
+    targetCount: 20,
+    startDate: new Date().toISOString(),
+  },
+]);
 
     console.log('Database seeded successfully');
   } catch (error) {
