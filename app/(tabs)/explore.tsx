@@ -41,44 +41,44 @@ export default function CategoriesScreen() {
     }
   };
 
-const renderItem = ({ item }: { item: CategoryItem }) => {
-  return (
-    <Pressable
-      onPress={() =>
-        router.push({
-          pathname: '/categories/edit/[id]',
-          params: { id: String(item.id) },
-        })
-      }
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.card,
-          shadowOpacity: 0.08,
-          elevation: 3,
-        },
-      ]}
-    >
-      <View style={styles.row}>
-        <View
-          style={[
-            styles.iconBadge,
-            { backgroundColor: item.color || colors.badge },
-          ]}
-        >
-          <Text style={styles.icon}>{item.icon || '📁'}</Text>
-        </View>
+  const renderItem = ({ item }: { item: CategoryItem }) => {
+    return (
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: '/categories/edit/[id]',
+            params: { id: String(item.id) },
+          })
+        }
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            shadowOpacity: 0.08,
+            elevation: 3,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.name} category`}
+        accessibilityHint={`Opens the edit screen for the ${item.name} category`}
+      >
+        <View style={styles.row}>
+          <View
+            style={[
+              styles.iconBadge,
+              { backgroundColor: item.color || colors.badge },
+            ]}
+          >
+            <Text style={styles.icon}>{item.icon || '📁'}</Text>
+          </View>
 
-        <View style={styles.textBlock}>
-          <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
-          <Text style={[styles.meta, { color: colors.subtext }]}>
-            {item.color || 'No colour set'}
-          </Text>
+          <View style={styles.textBlock}>
+            <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
-  );
-};
+      </Pressable>
+    );
+  };
 
   if (loading) {
     return (
@@ -99,6 +99,9 @@ const renderItem = ({ item }: { item: CategoryItem }) => {
       <Pressable
         style={[styles.addButton, { backgroundColor: colors.primary }]}
         onPress={() => router.push('/categories/add' as any)}
+        accessibilityRole="button"
+        accessibilityLabel="Add category"
+        accessibilityHint="Opens the form to create a new category"
       >
         <Text style={styles.addButtonText}>Add Category</Text>
       </Pressable>
@@ -189,10 +192,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 17,
     fontWeight: '700',
-    marginBottom: 2,
-  },
-  meta: {
-    fontSize: 14,
   },
   emptyCard: {
     padding: 18,

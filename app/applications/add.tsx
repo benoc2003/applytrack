@@ -1,190 +1,121 @@
 import FormField from '@/components/FormField';
 import { db } from '@/drizzle/db';
-import { applications, categories } from '@/drizzle/schema';
+import { categories } from '@/drizzle/schema';
 import { useAppTheme } from '@/utils/use-app-theme';
-import { eq } from 'drizzle-orm';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import {
-    Alert,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
+import { useState } from 'react';
+import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
-type CategoryItem = {
-  id: number;
-  userId: number;
-  name: string;
-  color: string | null;
-  icon: string | null;
-};
+const COLOR_OPTIONS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6'];
 
-export default function AddApplicationScreen() {
+export default function AddCategoryScreen() {
   const { colors } = useAppTheme();
 
-  const [company, setCompany] = useState('');
-  const [role, setRole] = useState('');
-  const [dateApplied, setDateApplied] = useState('');
-  const [priorityScore, setPriorityScore] = useState('');
-  const [notes, setNotes] = useState('');
-  const [categoryItems, setCategoryItems] = useState<CategoryItem[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      const data = await db
-        .select()
-        .from(categories)
-        .where(eq(categories.userId, 1));
-
-      setCategoryItems(data as CategoryItem[]);
-
-      if (data.length > 0) {
-        setSelectedCategoryId(data[0].id);
-      }
-    } catch (error) {
-      console.log('Error loading categories:', error);
-    }
-  };
+  const [name, setName] = useState('');
+  const [selectedColor, setSelectedColor] = useState('#2563eb');
+  const [icon, setIcon] = useState('');
 
   const handleSave = async () => {
-    if (
-      !company.trim() ||
-      !role.trim() ||
-      !dateApplied.trim() ||
-      !priorityScore.trim() ||
-      !selectedCategoryId
-    ) {
-      Alert.alert(
-        'Missing fields',
-        'Please fill in company, role, date, priority score and category.'
-      );
+    if (!name.trim()) {
+      Alert.alert('Missing field', 'Please enter a category name.');
       return;
     }
 
     try {
-      await db.insert(applications).values({
+      await db.insert(categories).values({
         userId: 1,
-        company: company.trim(),
-        role: role.trim(),
-        dateApplied: dateApplied.trim(),
-        priorityScore: Number(priorityScore),
-        categoryId: selectedCategoryId,
-        notes: notes.trim(),
-        createdAt: new Date().toISOString(),
+        name: name.trim(),
+        color: selectedColor,
+        icon: icon.trim() || '📁',
       });
 
-      Alert.alert('Success', 'Application added successfully.');
+      Alert.alert('Success', 'Category added successfully.');
       router.back();
     } catch (error) {
-      console.log('Error adding application:', error);
-      Alert.alert('Error', 'Something went wrong while saving the application.');
+      console.log('Error adding category:', error);
+      Alert.alert('Error', 'Something went wrong while saving the category.');
     }
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.heading, { color: colors.text }]}>Add Application</Text>
-        <Text style={[styles.subheading, { color: colors.subtext }]}>
-          Create a new job application record
+      <Text style={[styles.heading, { color: colors.text }]}>Add Category</Text>
+      <Text style={[styles.subheading, { color: colors.subtext }]}>
+        Create a category for your applications
+      </Text>
+
+      <FormField
+        label="Category Name"
+        placeholder="e.g. Software"
+        value={name}
+        onChangeText={setName}
+        accessibilityHint="Enter the name of the category"
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>Colour</Text>
+      <View style={styles.colorRow}>
+        {COLOR_OPTIONS.map((color) => {
+          const isSelected = selectedColor === color;
+
+          return (
+            <Pressable
+              key={color}
+              onPress={() => setSelectedColor(color)}
+              style={[
+                styles.colorCircle,
+                { backgroundColor: color },
+                isSelected && [styles.selectedCircle, { borderColor: colors.text }],
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Select colour ${color}`}
+              accessibilityHint="Sets the category colour"
+            />
+          );
+        })}
+      </View>
+
+      <FormField
+        label="Icon"
+        placeholder="e.g. 💻"
+        value={icon}
+        onChangeText={setIcon}
+        accessibilityHint="Enter an emoji to represent the category"
+      />
+
+      <View style={styles.previewRow}>
+        <Text style={[styles.previewLabel, { color: colors.subtext }]}>Preview</Text>
+        <View style={[styles.previewBadge, { backgroundColor: selectedColor }]}>
+          <Text style={styles.previewIcon}>{icon.trim() || '📁'}</Text>
+        </View>
+        <Text style={[styles.previewText, { color: colors.text }]}>
+          {name.trim() || 'Category Name'}
         </Text>
+      </View>
 
-        <FormField
-          label="Company"
-          placeholder="e.g. Google"
-          value={company}
-          onChangeText={setCompany}
-        />
+      <View style={styles.buttonRow}>
+        <Pressable
+          style={[styles.saveButton, { backgroundColor: colors.primary }]}
+          onPress={handleSave}
+          accessibilityRole="button"
+          accessibilityLabel="Save category"
+          accessibilityHint="Creates the new category"
+        >
+          <Text style={styles.saveButtonText}>Save Category</Text>
+        </Pressable>
 
-        <FormField
-          label="Role"
-          placeholder="e.g. Software Engineer"
-          value={role}
-          onChangeText={setRole}
-        />
-
-        <FormField
-          label="Date Applied"
-          placeholder="e.g. 2026-04-21"
-          value={dateApplied}
-          onChangeText={setDateApplied}
-        />
-
-        <Text style={[styles.categoryLabel, { color: colors.text }]}>Category</Text>
-        <View style={styles.categoryList}>
-          {categoryItems.map((category) => {
-            const isSelected = selectedCategoryId === category.id;
-
-            return (
-              <Pressable
-                key={category.id}
-                style={[
-                  styles.categoryOption,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                  },
-                  isSelected && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.selected,
-                  },
-                ]}
-                onPress={() => setSelectedCategoryId(category.id)}
-              >
-                <Text style={[styles.categoryOptionText, { color: colors.text }]}>
-                  {category.icon || '📁'} {category.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <FormField
-          label="Priority Score"
-          placeholder="1 to 5"
-          value={priorityScore}
-          onChangeText={setPriorityScore}
-          keyboardType="numeric"
-        />
-
-        <FormField
-          label="Notes"
-          placeholder="Optional notes"
-          value={notes}
-          onChangeText={setNotes}
-        />
-
-        <View style={styles.buttonRow}>
-          <Pressable
-            style={[styles.saveButton, { backgroundColor: colors.primary }]}
-            onPress={handleSave}
-          >
-            <Text style={styles.saveButtonText}>Save Application</Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.cancelButton,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-            onPress={() => router.back()}
-          >
-            <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+        <Pressable
+          style={[
+            styles.cancelButton,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Cancel"
+          accessibilityHint="Returns without saving the category"
+        >
+          <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -195,9 +126,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 32,
   },
-  scrollContent: {
-    paddingBottom: 32,
-  },
   heading: {
     fontSize: 30,
     fontWeight: '700',
@@ -207,27 +135,52 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
   },
-  categoryLabel: {
+  label: {
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
   },
-  categoryList: {
-    marginBottom: 16,
+  colorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 18,
+  },
+  colorCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+  },
+  selectedCircle: {
+    borderWidth: 3,
+  },
+  previewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
+    marginTop: 4,
+    marginBottom: 18,
   },
-  categoryOption: {
-    borderWidth: 1,
+  previewLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  previewBadge: {
+    width: 42,
+    height: 42,
     borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  categoryOptionText: {
-    fontSize: 15,
-    fontWeight: '500',
+  previewIcon: {
+    fontSize: 22,
+  },
+  previewText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   buttonRow: {
-    marginTop: 10,
+    marginTop: 8,
     gap: 12,
   },
   saveButton: {
