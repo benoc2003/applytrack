@@ -142,6 +142,9 @@ export default function HomeScreen() {
             params: { id: String(item.id) },
           })
         }
+        accessibilityRole="button"
+        accessibilityLabel={`${item.company} application`}
+        accessibilityHint={`Opens details for the ${item.role} application at ${item.company}`}
       >
         <View style={styles.cardTopRow}>
           <View style={styles.cardTextBlock}>
@@ -188,6 +191,9 @@ export default function HomeScreen() {
           <Pressable
             style={[styles.addButton, { backgroundColor: colors.primary }]}
             onPress={() => router.push('/applications/add' as Href)}
+            accessibilityRole="button"
+            accessibilityLabel="Add application"
+            accessibilityHint="Opens the form to create a new job application"
           >
             <Text style={styles.addButtonText}>Add Application</Text>
           </Pressable>
@@ -195,6 +201,9 @@ export default function HomeScreen() {
           <Pressable
             style={[styles.secondaryButton, { backgroundColor: colors.secondary }]}
             onPress={() => router.push('/targets' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="View targets"
+            accessibilityHint="Opens your weekly and monthly application targets"
           >
             <Text style={styles.secondaryButtonText}>View Targets</Text>
           </Pressable>
@@ -202,6 +211,9 @@ export default function HomeScreen() {
           <Pressable
             style={[styles.secondaryButton, { backgroundColor: colors.secondary }]}
             onPress={() => router.push('/insights' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="View insights"
+            accessibilityHint="Opens charts and analytics for your applications"
           >
             <Text style={styles.secondaryButtonText}>View Insights</Text>
           </Pressable>
@@ -221,6 +233,8 @@ export default function HomeScreen() {
         placeholderTextColor={colors.muted}
         value={searchText}
         onChangeText={setSearchText}
+        accessibilityLabel="Search applications"
+        accessibilityHint="Filter applications by company name or role title"
       />
 
       <Text style={[styles.filterLabel, { color: colors.text }]}>Category</Text>
@@ -238,6 +252,9 @@ export default function HomeScreen() {
             },
           ]}
           onPress={() => setSelectedCategoryId(null)}
+          accessibilityRole="button"
+          accessibilityLabel="Filter by all categories"
+          accessibilityHint="Shows applications from every category"
         >
           <Text style={[styles.filterButtonText, { color: colors.text }]}>All</Text>
         </Pressable>
@@ -257,6 +274,9 @@ export default function HomeScreen() {
               },
             ]}
             onPress={() => setSelectedCategoryId(category.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Filter by ${category.name}`}
+            accessibilityHint={`Shows only applications in the ${category.name} category`}
           >
             <Text style={[styles.filterButtonText, { color: colors.text }]}>
               {category.icon || '📁'} {category.name}
@@ -280,6 +300,9 @@ export default function HomeScreen() {
             },
           ]}
           onPress={() => setDateFilter('all')}
+          accessibilityRole="button"
+          accessibilityLabel="Show all dates"
+          accessibilityHint="Displays applications from any date"
         >
           <Text style={[styles.filterButtonText, { color: colors.text }]}>All</Text>
         </Pressable>
@@ -297,6 +320,9 @@ export default function HomeScreen() {
             },
           ]}
           onPress={() => setDateFilter('7days')}
+          accessibilityRole="button"
+          accessibilityLabel="Show last 7 days"
+          accessibilityHint="Displays applications from the last 7 days"
         >
           <Text style={[styles.filterButtonText, { color: colors.text }]}>Last 7 Days</Text>
         </Pressable>
@@ -314,6 +340,9 @@ export default function HomeScreen() {
             },
           ]}
           onPress={() => setDateFilter('30days')}
+          accessibilityRole="button"
+          accessibilityLabel="Show last 30 days"
+          accessibilityHint="Displays applications from the last 30 days"
         >
           <Text style={[styles.filterButtonText, { color: colors.text }]}>Last 30 Days</Text>
         </Pressable>

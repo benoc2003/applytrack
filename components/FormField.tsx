@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/utils/use-app-theme';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 type FormFieldProps = {
@@ -7,6 +8,7 @@ type FormFieldProps = {
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'numeric';
+  accessibilityHint?: string;
 };
 
 export default function FormField({
@@ -16,18 +18,30 @@ export default function FormField({
   onChangeText,
   secureTextEntry = false,
   keyboardType = 'default',
+  accessibilityHint,
 }: FormFieldProps) {
+  const { colors } = useAppTheme();
+
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            color: colors.text,
+          },
+        ]}
         placeholder={placeholder}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.muted}
+        accessibilityLabel={label}
+        accessibilityHint={accessibilityHint || `Enter ${label.toLowerCase()}`}
       />
     </View>
   );
@@ -40,17 +54,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0f172a',
     marginBottom: 6,
   },
   input: {
-    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#0f172a',
   },
 });
