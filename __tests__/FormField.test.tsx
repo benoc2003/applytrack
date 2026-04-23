@@ -2,6 +2,18 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import FormField from '../components/FormField';
 
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react');
+
+  return {
+    useFocusEffect: (callback: any) => {
+      React.useEffect(() => {
+        callback();
+      }, []);
+    },
+  };
+});
+
 describe('FormField', () => {
   it('renders label and placeholder and handles text input', () => {
     const onChangeText = jest.fn();

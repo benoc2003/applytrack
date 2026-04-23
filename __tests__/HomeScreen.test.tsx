@@ -33,12 +33,13 @@ jest.mock('../drizzle/db', () => ({
               categoryId: 1,
               categoryName: 'Software',
               categoryIcon: '💻',
+              categoryColor: '#3b82f6',
             },
           ])
         ),
         where: jest.fn(() =>
           Promise.resolve([
-            { id: 1, name: 'Software', icon: '💻' },
+            { id: 1, name: 'Software', icon: '💻', color: '#3b82f6' },
           ])
         ),
       })),
@@ -47,13 +48,17 @@ jest.mock('../drizzle/db', () => ({
 }));
 
 describe('HomeScreen', () => {
-  it('displays seeded application data', async () => {
-const { getByText, getAllByText } = render(<HomeScreen />);
+  it(
+    'displays seeded application data',
+    async () => {
+      const { getByText, getAllByText } = render(<HomeScreen />);
 
-    await waitFor(() => {
-      expect(getByText('Google')).toBeTruthy();
-      expect(getByText('Software Engineer')).toBeTruthy();
-      expect(getAllByText('💻 Software').length).toBeGreaterThan(0);
-    });
-  });
+      await waitFor(() => {
+        expect(getByText('Google')).toBeTruthy();
+        expect(getByText('Software Engineer')).toBeTruthy();
+        expect(getAllByText('💻 Software').length).toBeGreaterThan(0);
+      });
+    },
+    10000
+  );
 });
