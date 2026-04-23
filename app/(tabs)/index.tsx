@@ -24,12 +24,14 @@ type ApplicationItem = {
   categoryId: number;
   categoryName: string;
   categoryIcon: string | null;
+  categoryColor: string | null;
 };
 
 type CategoryOption = {
   id: number;
   name: string;
   icon: string | null;
+  color: string | null;
 };
 
 export default function HomeScreen() {
@@ -63,6 +65,7 @@ export default function HomeScreen() {
           categoryId: applications.categoryId,
           categoryName: categories.name,
           categoryIcon: categories.icon,
+          categoryColor: categories.color,
         })
         .from(applications)
         .innerJoin(categories, eq(applications.categoryId, categories.id));
@@ -82,6 +85,7 @@ export default function HomeScreen() {
           id: categories.id,
           name: categories.name,
           icon: categories.icon,
+          color: categories.color,
         })
         .from(categories)
         .where(eq(categories.userId, 1));
@@ -152,7 +156,12 @@ export default function HomeScreen() {
             <Text style={[styles.role, { color: colors.subtext }]}>{item.role}</Text>
           </View>
 
-          <View style={[styles.categoryBadge, { backgroundColor: colors.badge }]}>
+          <View
+            style={[
+              styles.categoryBadge,
+              { backgroundColor: item.categoryColor || colors.badge },
+            ]}
+          >
             <Text style={[styles.categoryBadgeText, { color: colors.text }]} numberOfLines={1}>
               {item.categoryIcon || '📁'} {item.categoryName}
             </Text>
@@ -256,7 +265,14 @@ export default function HomeScreen() {
           accessibilityLabel="Filter by all categories"
           accessibilityHint="Shows applications from every category"
         >
-          <Text style={[styles.filterButtonText, { color: colors.text }]}>All</Text>
+          <Text
+            style={[
+              styles.filterButtonText,
+              { color: selectedCategoryId === null ? colors.text : colors.text },
+            ]}
+          >
+            All
+          </Text>
         </Pressable>
 
         {categoryOptions.map((category) => (
@@ -269,8 +285,8 @@ export default function HomeScreen() {
                 borderColor: colors.border,
               },
               selectedCategoryId === category.id && {
-                backgroundColor: colors.selected,
-                borderColor: colors.primary,
+                backgroundColor: category.color || colors.selected,
+                borderColor: category.color || colors.primary,
               },
             ]}
             onPress={() => setSelectedCategoryId(category.id)}
@@ -278,7 +294,14 @@ export default function HomeScreen() {
             accessibilityLabel={`Filter by ${category.name}`}
             accessibilityHint={`Shows only applications in the ${category.name} category`}
           >
-            <Text style={[styles.filterButtonText, { color: colors.text }]}>
+            <Text
+              style={[
+                styles.filterButtonText,
+                {
+                  color: selectedCategoryId === category.id ? '#ffffff' : colors.text,
+                },
+              ]}
+            >
               {category.icon || '📁'} {category.name}
             </Text>
           </Pressable>
